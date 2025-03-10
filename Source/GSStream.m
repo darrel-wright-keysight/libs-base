@@ -129,6 +129,11 @@ static RunLoopEventType typeForStream(NSStream *aStream)
 
 - (void) removeStream: (NSStream*)aStream mode: (NSString*)mode
 {
+  RunLoopEventType 	type = typeForStream(aStream);
+  void			*event = [aStream _loopID];
+
+  NSDebugMLLog(@"NSStream", @"%@ (desc %d,%d) from %@ mode %@",
+    aStream, (int)(intptr_t)event, type, self, mode);
   /* We may have added the stream more than once (eg if the stream -open
    * method was called more than once, so we need to remove all event
    * registrations.
@@ -226,6 +231,7 @@ static RunLoopEventType typeForStream(NSStream *aStream)
 		 extra: (void*)extra
 	       forMode: (NSString*)mode
 {
+  NSDebugMLLog(@"NSStream", @"receivedEvent for %@ - %d", self, type);
   [self _dispatch];
 }
 
@@ -330,6 +336,43 @@ static RunLoopEventType typeForStream(NSStream *aStream)
 - (NSStreamStatus) streamStatus
 {
   return _currentStatus;
+}
+
+- (NSString*) _stringFromEvents
+{
+  NSMutableString	*s = [NSMutableString stringWithCapacity: 100];
+  BOOL			bits = 0;
+
+  if (0 == _events)
+    {
+      return @"None";
+    }
+  if (_events & NSStreamEventOpenCompleted)
+    {
+      if (bits++ > 0) [s appendString: @"|"];
+      [s appendString: @"OpenCompleted"];
+    }
+  if (_events & NSStreamEventHasBytesAvailable)
+    {
+      if (bits++ > 0) [s appendString: @"|"];
+      [s appendString: @"HasBytesAvailable"];
+    }
+  if (_events & NSStreamEventHasSpaceAvailable)
+    {
+      if (bits++ > 0) [s appendString: @"|"];
+      [s appendString: @"HasSpaceAvailable"];
+    }
+  if (_events & NSStreamEventErrorOccurred)
+    {
+      if (bits++ > 0) [s appendString: @"|"];
+      [s appendString: @"ErrorOccurred"];
+    }
+  if (_events & NSStreamEventEndEncountered)
+    {
+      if (bits++ > 0) [s appendString: @"|"];
+      [s appendString: @"EndEncountered"];
+    }
+  return s;
 }
 
 @end
@@ -455,6 +498,13 @@ static RunLoopEventType typeForStream(NSStream *aStream)
   id delegate = [self delegate];
   BOOL delegateValid = [self _delegateValid];
   
+  [self _sendEvent: event delegate: _delegateValid == YES ? _delegate : nil];
+}
+
+- (void) _sendEvent: (NSStreamEvent)event delegate: (id)delegate
+{
+  NSDebugMLLog(@"NSStream",
+    @"%@ event:%@ delegate: %@", self, [self stringFromEvent: event], delegate);
   if (event == NSStreamEventNone)
     {
       return;

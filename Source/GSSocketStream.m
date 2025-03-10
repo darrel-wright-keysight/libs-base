@@ -1878,6 +1878,13 @@ setNonBlocking(SOCKET fd)
   [super dealloc];
 }
 
+- (NSString*) description
+{
+  return [NSString stringWithFormat: @"<%s: %p sock %lld loopID %p mask %@>",
+    class_getName(object_getClass(self)), self,
+    (long long)_sock, _loopID, [self _stringFromEvents]];
+}
+
 - (id) init
 {
   if ((self = [super init]) != nil)
@@ -2157,6 +2164,7 @@ setNonBlocking(SOCKET fd)
 
 - (void) open
 {
+  NSDebugMLLog(@"NSStream", @"%@", self);
   // could be opened because of sibling
   if ([self _isOpened])
     return;
@@ -2268,6 +2276,7 @@ setNonBlocking(SOCKET fd)
 
 - (void) close
 {
+  NSDebugMLLog(@"NSStream", @"%@", self);
   /* If the socket descriptor is still present, we need to close it to
    * avoid a leak no matter what the nominal state of the stream is.
    * The descriptor is created before the stream is formally opened.
@@ -2324,6 +2333,8 @@ setNonBlocking(SOCKET fd)
 
 - (NSInteger) read: (uint8_t *)buffer maxLength: (NSUInteger)len
 {
+  NSInteger	result;
+
   if (buffer == 0)
     {
       [NSException raise: NSInvalidArgumentException
@@ -2336,9 +2347,12 @@ setNonBlocking(SOCKET fd)
     }
 
   if (_handler == nil)
-    return [self _read: buffer maxLength: len];
+    result = [self _read: buffer maxLength: len];
   else
-    return [_handler read: buffer maxLength: len];
+    result = [_handler read: buffer maxLength: len];
+  NSDebugMLLog(@"NSStream", @"%@ tried %lld result %lld",
+    self, (long long)len, (long long) result);
+  return result;
 }
 
 - (NSInteger) _read: (uint8_t *)buffer maxLength: (NSUInteger)len
@@ -2656,6 +2670,7 @@ setNonBlocking(SOCKET fd)
 
 - (void) open
 {
+  NSDebugMLLog(@"NSStream", @"%@", self);
   // could be opened because of sibling
   if ([self _isOpened])
     return;
@@ -2769,6 +2784,7 @@ setNonBlocking(SOCKET fd)
 
 - (void) close
 {
+  NSDebugMLLog(@"NSStream", @"%@", self);
   /* If the socket descriptor is still present, we need to close it to
    * avoid a leak no matter what the nominal state of the stream is.
    * The descriptor is created before the stream is formally opened.
@@ -2825,6 +2841,8 @@ setNonBlocking(SOCKET fd)
 
 - (NSInteger) write: (const uint8_t *)buffer maxLength: (NSUInteger)len
 {
+  NSInteger	result;
+
   if (len == 0)
     {
       /*
@@ -2843,19 +2861,24 @@ setNonBlocking(SOCKET fd)
        *  detect that no more data is arriving, and shut down.
        */
       _events &= ~NSStreamEventHasSpaceAvailable;
-      return 0;
+      result = 0;
     }
-
-  if (buffer == 0)
-    {
-      [NSException raise: NSInvalidArgumentException
-		  format: @"null pointer for buffer"];
-    }
-
-  if (_handler == nil)
-    return [self _write: buffer maxLength: len];
   else
-    return [_handler write: buffer maxLength: len];
+    {
+      if (buffer == 0)
+	{
+	  [NSException raise: NSInvalidArgumentException
+		      format: @"null pointer for buffer"];
+	}
+
+      if (_handler == nil)
+	result = [self _write: buffer maxLength: len];
+      else
+	result = [_handler write: buffer maxLength: len];
+    }
+  NSDebugMLLog(@"NSStream", @"%@ tried %lld result %lld",
+    self, (long long)len, (long long) result);
+  return result;
 }
 
 - (void) _dispatch
@@ -3068,6 +3091,7 @@ setNonBlocking(SOCKET fd)
   int listenReturn;
   SOCKET s;
 
+  NSDebugMLLog(@"NSStream", @"%@", self);
   if (_currentStatus != NSStreamStatusNotOpen)
     {
       NSDebugMLLog(@"NSStream",
@@ -3133,6 +3157,7 @@ setNonBlocking(SOCKET fd)
 
 - (void) close
 {
+  NSDebugMLLog(@"NSStream", @"%@", self);
 #if	defined(_WIN32)
   if (_loopID != WSA_INVALID_EVENT)
     {
