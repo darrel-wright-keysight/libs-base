@@ -506,6 +506,7 @@ static RunLoopEventType typeForStream(NSStream *aStream)
 
 - (void) _sendEvent: (NSStreamEvent)event delegate: (id)delegate
 {
+  BOOL delegateValid = [self _delegateValid];
   NSDebugMLLog(@"NSStream",
     @"%@ event:%@ delegate: %@", self, [self stringFromEvent: event], delegate);
   if (event == NSStreamEventNone)
