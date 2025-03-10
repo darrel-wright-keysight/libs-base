@@ -217,6 +217,14 @@ GS_EXPORT_CLASS @interface NSHTTPCookie :  NSObject
  */
 - (BOOL) isSessionOnly;
 
+#if OS_API_VERSION(MAC_OS_X_VERSION_10_6,GS_API_LATEST)
+#if GS_HAS_DECLARED_PROPERTIES
+@property (readonly, getter=isHTTPOnly) BOOL HTTPOnly;
+#else
+- (BOOL) isHTTPOnly;
+#endif
+#endif
+
 /**
  * Returns the name of the receiver.
  */

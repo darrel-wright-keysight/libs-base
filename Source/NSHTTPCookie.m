@@ -66,6 +66,7 @@ NSString * const NSHTTPCookiePort = @"Port";
 NSString * const NSHTTPCookieSecure = @"Secure";
 NSString * const NSHTTPCookieValue = @"Value";
 NSString * const NSHTTPCookieVersion = @"Version";
+static NSString * const HTTPCookieHTTPOnly = @"HTTPOnly";
 
 // Internal data storage
 typedef struct {
@@ -333,6 +334,11 @@ static NSRange GSRangeOfCookie(NSString *string);
 - (BOOL) isSecure
 {
   return [[this->_properties objectForKey: NSHTTPCookieSecure] boolValue];
+}
+
+- (BOOL) isHTTPOnly
+{
+  return [[this->_properties objectForKey: HTTPCookieHTTPOnly] boolValue];
 }
 
 - (BOOL) isSessionOnly
@@ -716,7 +722,7 @@ _setCookieKey(NSMutableDictionary *dict, NSString *key, NSString *value)
   else if ([[key lowercaseString] isEqual: @"secure"])
     [dict setObject: [NSNumber numberWithBool: YES] 
 	     forKey: NSHTTPCookieSecure];
-  else if ([[key lowercaseString] isEqual: @"httponly"])
+  else if ([[key lowercaseString] isEqual:@"httponly"])
     [dict setObject: [NSNumber numberWithBool: YES]
              forKey: HTTPCookieHTTPOnly];
   else if ([[key lowercaseString] isEqual: @"version"])
