@@ -393,13 +393,6 @@ static NSRange GSRangeOfCookie(NSString *string);
   return [[other properties] isEqual: [self properties]];
 }
 
-- (BOOL) isHTTPOnly
-{
-  if ([this->_properties objectForKey: @"HttpOnly"])
-    return [[this->_properties objectForKey: @"HttpOnly"] boolValue];
-  return NO;
-}
-
 @end
 
 #define inrange(ch,min,max) ((ch)>=(min) && (ch)<=(max))
