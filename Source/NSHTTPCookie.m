@@ -48,7 +48,9 @@
 #import "Foundation/NSSet.h"
 #import "Foundation/NSValue.h"
 #import "Foundation/NSString.h"
-#import "Foundation/NSCalendarDate.h"
+#import "Foundation/NSDateFormatter.h"
+#import "Foundation/NSLocale.h"
+#import "Foundation/NSTimeZone.h"
 #import "GNUstepBase/Unicode.h"
 
 NSString * const NSHTTPCookieComment = @"Comment";
@@ -686,10 +688,22 @@ _setCookieKey(NSMutableDictionary *dict, NSString *key, NSString *value)
   else if ([[key lowercaseString] isEqual: @"expires"])
     {
       NSDate *expireDate;
-      expireDate = [NSCalendarDate dateWithString: value
-				calendarFormat: @"%a, %d-%b-%Y %I:%M:%S %Z"];
+      NSDateFormatter *formatter;
+      NSLocale *locale;
+      NSTimeZone *gmtTimeZone;
+
+      locale = [NSLocale localeWithLocaleIdentifier: @"en_US"];
+      gmtTimeZone = [NSTimeZone timeZoneWithAbbreviation: @"GMT"];
+
+      formatter = [[NSDateFormatter alloc] init];
+      [formatter setDateFormat: @"EEE, dd-MMM-yyyy HH:mm:ss zzz"];
+      [formatter setLocale: locale];
+      [formatter setTimeZone: gmtTimeZone];
+
+      expireDate = [formatter dateFromString:value];
       if (expireDate)
         [dict setObject: expireDate forKey: NSHTTPCookieExpires];
+      RELEASE(formatter);
     }
   else if ([[key lowercaseString] isEqual: @"max-age"])
     [dict setObject: value forKey: NSHTTPCookieMaximumAge];
@@ -702,10 +716,11 @@ _setCookieKey(NSMutableDictionary *dict, NSString *key, NSString *value)
   else if ([[key lowercaseString] isEqual: @"secure"])
     [dict setObject: [NSNumber numberWithBool: YES] 
 	     forKey: NSHTTPCookieSecure];
+  else if ([[key lowercaseString] isEqual: @"httponly"])
+    [dict setObject: [NSNumber numberWithBool: YES]
+             forKey: HTTPCookieHTTPOnly];
   else if ([[key lowercaseString] isEqual: @"version"])
     [dict setObject: value forKey: NSHTTPCookieVersion];
-  else if ([[key lowercaseString] isEqual: @"httponly"])
-    [dict setObject: @"YES" forKey: @"HttpOnly"];
   return YES;
 }
 

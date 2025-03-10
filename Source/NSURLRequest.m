@@ -44,6 +44,7 @@ typedef struct {
   NSMutableDictionary		*headers;
   BOOL				shouldHandleCookies;
   BOOL                          debug;
+  BOOL        assumesHTTP3Capable;
   NSURL				*URL;
   NSURL				*mainDocumentURL;
   NSURLRequestCachePolicy	cachePolicy;
@@ -58,6 +59,9 @@ typedef struct {
 #define	inst	((Internal*)(((NSURLRequest*)o)->_NSURLRequestInternal))
 
 @interface	_GSMutableInsensitiveDictionary : NSMutableDictionary
+@end
+
+@interface	_GSInsensitiveDictionary : NSMutableDictionary
 @end
 
 @implementation	NSURLRequest
@@ -120,6 +124,7 @@ typedef struct {
 	  ASSIGN(inst->bodyStream, this->bodyStream);
 	  ASSIGN(inst->method, this->method);
 	  inst->shouldHandleCookies = this->shouldHandleCookies;
+    inst->assumesHTTP3Capable = this->assumesHTTP3Capable;
 	  inst->debug = this->debug;
           inst->headers = [this->headers mutableCopy];
 	}
@@ -368,6 +373,11 @@ typedef struct {
   return [this->headers objectForKey: field];
 }
 
+- (BOOL) assumesHTTP3Capable
+{
+  return this->assumesHTTP3Capable;
+}
+
 @end
 
 
@@ -440,6 +450,11 @@ typedef struct {
   [this->headers setObject: value forKey: field];
 }
 
+- (void)setAssumesHTTP3Capable:(BOOL)capable
+{
+  this->assumesHTTP3Capable = capable;
+}
+
 @end
 
 @implementation	NSURLRequest (Private)
@@ -447,6 +462,11 @@ typedef struct {
 - (BOOL) _debug
 {
   return this->debug;
+}
+
+- (NSDictionary *) _insensitiveHeaders
+{
+  return [this->headers copy];
 }
 
 - (id) _propertyForKey: (NSString*)key

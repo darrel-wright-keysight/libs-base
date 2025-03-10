@@ -543,6 +543,61 @@ static NSArray	*empty = nil;
 
 @end
 
+
+@implementation NSBlockOperation
+
++ (instancetype) blockOperationWithBlock: (GSBlockOperationBlock)block
+{
+  NSBlockOperation *op = [[self alloc] init];
+
+  [op addExecutionBlock: block];
+  return AUTORELEASE(op);
+}
+
+- (void) addExecutionBlock: (GSBlockOperationBlock)block
+{
+  id	blockCopy = (id)Block_copy(block);
+
+  [_executionBlocks addObject: blockCopy];
+  RELEASE(blockCopy);
+}
+
+- (void) dealloc
+{
+  RELEASE(_executionBlocks);
+  [super dealloc];
+}
+
+- (NSArray *) executionBlocks
+{
+  return _executionBlocks;
+}
+
+- (id) init
+{
+  self = [super init];
+  if (self != nil)
+    {
+      _executionBlocks = [[NSMutableArray alloc] initWithCapacity: 1];
+    }
+  return self;
+}
+
+- (void) main
+{
+  NSEnumerator 		*en = [_executionBlocks objectEnumerator];
+  GSBlockOperationBlock theBlock;
+
+  while ((theBlock = (GSBlockOperationBlock)[en nextObject]) != NULL)
+    {
+      CALL_NON_NULL_BLOCK_NO_ARGS(theBlock);
+    }
+
+  [_executionBlocks removeAllObjects];
+}
+@end
+
+
 #undef	GSInternal
 #define	GSInternal	NSOperationQueueInternal
 #include	"GSInternal.h"

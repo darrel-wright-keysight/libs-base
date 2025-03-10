@@ -65,6 +65,7 @@
 - (BOOL) _debug;
 - (id) _propertyForKey: (NSString*)key;
 - (void) _setProperty: (id)value forKey: (NSString*)key;
+- (NSDictionary *) _insensitiveHeaders;
 @end
 
 
