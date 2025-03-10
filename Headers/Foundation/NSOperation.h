@@ -39,7 +39,7 @@
 extern "C" {
 #endif
 
-#if OS_API_VERSION(MAC_OS_X_VERSION_10_6, GS_API_LATEST)
+#ifndef GSOperationCompletionBlock
 #import <GNUstepBase/GSBlocks.h>
 DEFINE_BLOCK_TYPE_NO_ARGS(GSOperationCompletionBlock, void);
 #endif
