@@ -121,8 +121,12 @@ static RunLoopEventType typeForStream(NSStream *aStream)
 @implementation	NSRunLoop (NSStream)
 - (void) addStream: (NSStream*)aStream mode: (NSString*)mode
 {
-  [self addEvent: [aStream _loopID]
-	    type: typeForStream(aStream)
+  RunLoopEventType 	type = typeForStream(aStream);
+  void			*event = [aStream _loopID];
+
+  NSDebugMLLog(@"NSStream", @"%@ %@, %@ (type %d)", self, aStream, mode, type);
+  [self addEvent: event
+	    type: type
 	 watcher: (id<RunLoopEvents>)aStream
 	 forMode: mode];
 }
@@ -132,8 +136,7 @@ static RunLoopEventType typeForStream(NSStream *aStream)
   RunLoopEventType 	type = typeForStream(aStream);
   void			*event = [aStream _loopID];
 
-  NSDebugMLLog(@"NSStream", @"%@ (desc %d,%d) from %@ mode %@",
-    aStream, (int)(intptr_t)event, type, self, mode);
+  NSDebugMLLog(@"NSStream", @"%@ %@, %@ (type %d)", self, aStream, mode, type);
   /* We may have added the stream more than once (eg if the stream -open
    * method was called more than once, so we need to remove all event
    * registrations.
@@ -231,7 +234,7 @@ static RunLoopEventType typeForStream(NSStream *aStream)
 		 extra: (void*)extra
 	       forMode: (NSString*)mode
 {
-  NSDebugMLLog(@"NSStream", @"receivedEvent for %@ - %d", self, type);
+  NSDebugMLLog(@"NSStream", @"%@ %p, %d, %p, %@", self, data, type, extra, mode);
   [self _dispatch];
 }
 
@@ -507,17 +510,26 @@ static RunLoopEventType typeForStream(NSStream *aStream)
     @"%@ event:%@ delegate: %@", self, [self stringFromEvent: event], delegate);
   if (event == NSStreamEventNone)
     {
-      return;
+      // do nothing
     }
   else if (event == NSStreamEventOpenCompleted)
     {
-      if ((_events & event) == 0)
+      if ((_events & NSStreamEventOpenCompleted) == 0)
 	{
 	  _events |= NSStreamEventOpenCompleted;
 	  if (delegateValid == YES)
 	    {
 	      [delegate stream: self
 		    handleEvent: NSStreamEventOpenCompleted];
+	    }
+	  if ([self isKindOfClass: [NSOutputStream class]])
+	    {
+	      _events |= NSStreamEventHasSpaceAvailable;
+	      if (delegate != nil)
+		{
+		  [delegate stream: self
+		     handleEvent: NSStreamEventHasSpaceAvailable];
+		}
 	    }
 	}
     }
@@ -555,8 +567,12 @@ static RunLoopEventType typeForStream(NSStream *aStream)
 	}
       if ((_events & NSStreamEventHasSpaceAvailable) == 0)
 	{
+	  if (_currentStatus == NSStreamStatusWriting)
+	    {
+	      [self _setStatus: NSStreamStatusOpen];
+	    }
 	  _events |= NSStreamEventHasSpaceAvailable;
-	  if (delegateValid == YES)
+	  if (delegate != nil)
 	    {
 	      [delegate stream: self
 		    handleEvent: NSStreamEventHasSpaceAvailable];

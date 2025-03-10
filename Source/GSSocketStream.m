@@ -2398,6 +2398,14 @@ setNonBlocking(SOCKET fd)
         }
       else
         {
+#if	defined(_WIN32)
+	  if (WSAECONNABORTED == eno)
+	    {
+	      readLen = 0;	// Read end of file
+	      readLen = -1;
+	    }
+	  else
+#endif
           if (socketWouldBlock(eno))
             {
               /* We need an event from the operating system
@@ -2410,8 +2418,8 @@ setNonBlocking(SOCKET fd)
               NSError	*e = [NSError _systemError: eno];
 
               [self _recordError: e];
+	      readLen = -1;
             }
-          readLen = -1;
         }
     }
   else if (readLen == 0)
@@ -2451,6 +2459,10 @@ setNonBlocking(SOCKET fd)
       NSAssert([_sibling streamStatus] != NSStreamStatusClosed,
 	@"Received event for closed stream");
       [_sibling _dispatch];
+    }
+  else if ([self streamStatus] == NSStreamStatusAtEnd)
+    {
+      [self _sendEvent: NSStreamEventEndEncountered];
     }
   else if ([self streamStatus] == NSStreamStatusError)
     {
@@ -2663,20 +2675,29 @@ setNonBlocking(SOCKET fd)
         }
       else
         {
+#if	defined(_WIN32)
+	  if (WSAECONNABORTED == eno)
+	    {
+	      [_sibling _setStatus:  NSStreamStatusAtEnd];
+	      writeLen = 0;
+	    }
+	  else
+#endif
           if (socketWouldBlock(eno))
             {
               /* We need an event from the operating system
                * to tell us we can start writing again.
                */
               [self _setStatus: NSStreamStatusWriting];
+              writeLen = -1;
             }
           else
             {
               NSError	*e = [NSError _systemError: eno];
 
               [self _recordError: e];
+              writeLen = -1;
             }
-          writeLen = -1;
         }
     }
   else
@@ -2923,6 +2944,10 @@ setNonBlocking(SOCKET fd)
       NSAssert([_sibling streamStatus] != NSStreamStatusClosed,
 	@"Received event for closed stream");
       [_sibling _dispatch];
+    }
+  else if ([self streamStatus] == NSStreamStatusAtEnd)
+    {
+      [self _sendEvent: NSStreamEventEndEncountered];
     }
   else if ([self streamStatus] == NSStreamStatusError)
     {
@@ -3301,7 +3326,7 @@ setNonBlocking(SOCKET fd)
       [outs _setSibling: ins];
       *outputStream = (NSOutputStream*)outs;
     }
-  /* Now the streams are redy to be opened.
+  /* Now the streams are ready to be opened.
    */
 }
 
