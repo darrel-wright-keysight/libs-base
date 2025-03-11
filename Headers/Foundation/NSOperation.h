@@ -204,6 +204,21 @@ GS_EXPORT_CLASS @interface NSOperation : NSObject
 
 @end
 
+GS_EXPORT_CLASS
+@interface NSBlockOperation : NSOperation
+{
+  @private
+    NSMutableArray *_executionBlocks;
+    void *_reserved;
+}
+
+// Managing the blocks in the Operation
++ (instancetype) blockOperationWithBlock: (GSBlockOperationBlock)block;
+- (void) addExecutionBlock: (GSBlockOperationBlock)block;
+- (NSArray *) executionBlocks;
+
+@end
+
 
 /**
  * NSOperationQueue
