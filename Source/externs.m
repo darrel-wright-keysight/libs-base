@@ -314,8 +314,8 @@ NSString *NSLanguageName = @"NSLanguageName";
 NSString *NSFormalName = @"NSFormalName";
 
 /* For GNUstep */
-GS_DECLARE NSString* const GSLocale = @"GSLocale";
 GS_DECLARE NSString *const GSCACertificateFilePath = @"GSCACertificateFilePath";
+NSString *GSLocale = @"GSLocale";
 
 
 /*

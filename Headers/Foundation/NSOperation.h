@@ -42,6 +42,7 @@ extern "C" {
 #ifndef GSOperationCompletionBlock
 #import <GNUstepBase/GSBlocks.h>
 DEFINE_BLOCK_TYPE_NO_ARGS(GSOperationCompletionBlock, void);
+DEFINE_BLOCK_TYPE_NO_ARGS(GSBlockOperationBlock, void);
 #endif
 
 @class NSMutableArray;
